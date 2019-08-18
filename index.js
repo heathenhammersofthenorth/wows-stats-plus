@@ -31,7 +31,7 @@ function get_season_num() {
 			if (json.status == "ok") {
 				if (json.meta.count >= 0) {
 					for(var e in json.data) {
-						console.log('checking season: ' + e);
+						// console.log('checking season: ' + e);
 						if (json.data[e].parent_season_id > 0){
 							if (latest_season_num < json.data[e].season_id) {
 								latest_season_num = json.data[e].season_id;

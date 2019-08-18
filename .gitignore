@@ -1,3 +1,4 @@
-
+node_modules/
 static/js/coefficients.json
 static/js/pr-expected.json
+.env
