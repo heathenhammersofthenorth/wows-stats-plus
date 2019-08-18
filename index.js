@@ -30,7 +30,15 @@ function get_season_num() {
 			var json = JSON.parse(body);
 			if (json.status == "ok") {
 				if (json.meta.count >= 0) {
-					latest_season_num = json.meta.count;
+					for(var e in json.data) {
+						console.log('checking season: ' + e);
+						if (json.data[e].parent_season_id > 0){
+							if (latest_season_num < json.data[e].season_id) {
+								latest_season_num = json.data[e].season_id;
+							}
+						}
+					}					
+					//latest_season_num = json.meta.count;
 					console.log('latest season number of rank battle = ' + latest_season_num);
 				}
 			}
