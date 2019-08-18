@@ -39,6 +39,25 @@ function get_season_num() {
 }
 get_season_num();
 
+function update_WNcoefficientsJSON() {
+	request('https://api.wows-numbers.com/personal/rating/expected/json/', function (error, response, body) {
+		if ((!error && response.statusCode == 200) || (!error && response.statusCode == 304)) {
+//			console.log('Got coefficients json file for WOWS Numbers.');
+
+			fs.writeFile('static/js/coefficients.json', body, function (err) {
+			  	if (!err) {
+					console.log('Overwrite ./static/js/coefficients.json file.');
+			  	}
+			  	else {
+		  			console.log("Update error ./static/js/coefficients.json file. : %s", err);
+			  	}
+			});
+		} else
+			console.log('Error getting coefficients data.');
+	});
+}
+update_WNcoefficientsJSON();
+
 function update_WTRcoefficientsJSON() {
 	request('https://api.asia.warships.today/json/wows/ratings/warships-today-rating/coefficients', function (error, response, body) {
 		if ((!error && response.statusCode == 200) || (!error && response.statusCode == 304)) {
@@ -56,7 +75,8 @@ function update_WTRcoefficientsJSON() {
 			console.log('Error getting coefficients data.');
 	});
 }
-update_WTRcoefficientsJSON();
+// warships.today dead
+//update_WTRcoefficientsJSON();
 
 // static endpoint
 app.use(express.static(__dirname + '/static'));
@@ -86,10 +106,8 @@ router.get('/env', function(req, res) {
 // player api
 router.get('/player', jsonParser, function(req, res) {
 	if (req.query.name) {
-		// except co-op & scenario bot ships
-		var reg1 = new RegExp(/^:\w+:$/);
-		var reg2 = new RegExp(/^IDS_OP_\w+$/);
-		if ((reg1.test(req.query.name) == false) && (reg2.test(req.query.name) == false)) {
+		var reg = new RegExp(/^:\w+:$/);
+		if (reg.test(req.query.name) == false) {
 //			console.log(req.query.name);
 
 			// search and get account_id
@@ -328,7 +346,7 @@ router.get('/arena', jsonParser, function(req, res) {
 	var freg = new RegExp(/^\d{8}_\d{6}_\w{4}\d{3}-.+$/);
 	var arg_mode = false;
 	var arenaJson = '';
-
+		
 	if ((fname != '') && freg.test(fname)) {
 		arenaJson = process.env.WOWS_PATH + '/replays/' + fname + '.wowsreplay';
 		arg_mode = true;

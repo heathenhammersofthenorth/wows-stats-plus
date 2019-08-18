@@ -1,4 +1,4 @@
-const wsp_version = '1.1.1';
+const wsp_version = '1.1.0';
 const MAX_RETRY = 5;
 
 // include WTR rating calculation
@@ -31,7 +31,6 @@ var Interval_timer;
 
 var api_url = '';
 var api_key = '';
-
 
 function get_availableLanguageList() {
 //	console.log('Enter get_availableLanguageList');
@@ -121,7 +120,7 @@ function get_WTRcoefficientsShipList() {
 		$.getJSON('js/coefficients.json', function(data) {
 			if (data.status = 'ok') {
 //				console.log(data);
-				coefficientsList = data.expected;
+				coefficientsList = data.data;				
 //				console.log(coefficientsList);
 //				console.log('Success get coefficients list');
 				resolve();
@@ -204,14 +203,13 @@ function getClanList(nArray) {
 	var accountIdList = [];
 	var idList = [];
 
-	// except co-op & scenario bot ships
+	// except co-op bot
 	for (var i=0; i<nArray.length; i++) {
-		var reg1 = new RegExp(/^:\w+:$/);
-		var reg2 = new RegExp(/^IDS_OP_\w+$/);
-		if ((reg1.test(nArray[i]) == false) && (reg2.test(nArray[i]) == false))
+		var reg = new RegExp(/^:\w+:$/);
+		if (reg.test(nArray[i]) == false)
 			nameList.push(nArray[i]);
 	}
-	console.log(nameList);
+//	console.log(nameList);
 
 	var sync_getAccountId = new Promise (function (resolve, reject) {
 		var nameSrings = nameList.join(',');
@@ -1009,9 +1007,8 @@ api.owner = function(type, value) {
 
 api.player = function(player) {
 	return $q(function(resolve, reject) {
-		var reg1 = new RegExp(/^:\w+:$/);
-		var reg2 = new RegExp(/^IDS_OP_\w+$/);
-		if ((reg1.test(player.name) == false) && (reg2.test(player.name) == false)) {
+		var reg = new RegExp(/^:\w+:$/);
+		if (reg.test(player.name) == false) {
 			$http({
 				method:'GET',
 				url: '/api/player?name=' + encodeURIComponent(player.name)
@@ -1141,13 +1138,14 @@ api.ship = function(player) {
 				// WTR(WarshipsToday Rating) and PR(Personal Rating)
 				var expected = {};
 				if (coefficientsList != null) {
-					for (key in coefficientsList) {
-						if (coefficientsList[key].ship_id == player.shipId) {
+					//for (key in coefficientsList) {
+					//	if (coefficientsList[key].ship_id == player.shipId) {
+							key = player.shipId;
 							expected = coefficientsList[key];
-//							console.log("player:%s list:%s", player.shipId, coefficientsList[key].ship_id);
-							break;
-						}
-					}
+							//console.log("player:%s list:%s", player.shipId, coefficientsList[key]);
+							//break;
+					//	}
+					//}
 				}
 				if (expected != null) {
 					var actual = {};
@@ -1157,7 +1155,7 @@ api.ship = function(player) {
 					actual.frags = parseFloat(data.raw.pvp.frags / data.raw.pvp.battles);
 					actual.planes_killed = parseFloat(data.raw.pvp.planes_killed / data.raw.pvp.battles);
 					actual.wins = parseFloat(data.raw.pvp.wins / data.raw.pvp.battles);
-					wtr = calculateWarshipsTodayRating(expected, actual);
+					//wtr = calculateWarshipsTodayRating(expected, actual);
 					pr = calculatePersonalRating(expected, actual);
 //					console.log(wtr);
 //					console.log(pr);
@@ -1617,16 +1615,10 @@ app.controller('TeamStatsCtrl', ['$scope', '$translate', '$filter', '$rootScope'
 						for (var key in kariload) {
 								delete kariload[key];
 						}
-						var player_count = 0;
 						for (var i=0; i<data.vehicles.length; i++) {
-//							var reg1 = new RegExp(/^:\w+:$/);
-							var reg2 = new RegExp(/^IDS_OP_\w+$/);
-//							if ((reg1.test(data.vehicles[i].name) == false) && (reg2.test(data.vehicles[i].name) == false)) {
-							if (reg2.test(data.vehicles[i].name) == false) {
-								kariload[player_count++] = data.vehicles[i];
-							}
+								kariload[i] = data.vehicles[i];
 						}
-						console.log(kariload);
+//						console.log(kariload);
 
 						// sort data as ship_type > tier > nation > shipID > playername with clan tag
 						kariload.sort( function(val1,val2) {
@@ -1677,27 +1669,15 @@ app.controller('TeamStatsCtrl', ['$scope', '$translate', '$filter', '$rootScope'
 
 						for (var i=0; i<kariload.length; i++) {
 							var player = kariload[i];
-							try {
-								if ('is_bot' in player) {
-									if (player.is_bot != true) {
-			 							player.api = {};
-		 							}
-		 						} else {
-		 							player.api = {};
-								}
-							} catch(e) {
+							if (player.is_bot != true)
 	 							player.api = {};
-							}
 
 							$scope.players.push(player);
 							api.fetchPlayer(player);
 
 							$scope.link_disabled = function () {
-								if ('is_bot' in player) {
-									if (player.is_bot) {
-										return false;
-									}
-								}
+								if (player.is_bot)
+									return false;
 							}
 						}
 					});
