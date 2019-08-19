@@ -354,13 +354,15 @@ router.get('/arena', jsonParser, function(req, res) {
 	var freg = new RegExp(/^\d{8}_\d{6}_\w{4}\d{3}-.+$/);
 	var arg_mode = false;
 	var arenaJson = '';
-		
-	if ((fname != '') && freg.test(fname)) {
-		arenaJson = process.env.WOWS_PATH + '/replays/' + fname + '.wowsreplay';
-		arg_mode = true;
+
+	// Use the base path and see if the arena file is available under bin64 or the default folder.	
+	arenaJson = process.env.WOWS_PATH;
+	if (fs.existsSync(arenaJson + '/bin64/replays/tempArenaInfo.json')) {
+		arenaJson += '/bin64/replays/tempArenaInfo.json';
+	} else if (fs.existsSync(arenaJson + '/replays/tempArenaInfo.json')) {
+		arenaJson += '/replays/tempArenaInfo.json';
 	} else {
-		arenaJson = process.env.WOWS_PATH + '/replays/tempArenaInfo.json';
-		arg_mode = false;
+		arenaJson += '/replays/tempArenaInfo.json';
 	}
 
 //	console.log('argv: ' + fname);
