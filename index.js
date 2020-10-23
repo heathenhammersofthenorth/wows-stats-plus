@@ -4,6 +4,7 @@ const bodyParser 	= require('body-parser');
 const request 	= require('request');
 const fs			= require('fs');
 const jsonfile 	= require('jsonfile');
+const parser = require('xml-js');
 
 var app = express();
 var port = process.env.PORT || 8080;
@@ -17,6 +18,24 @@ if (capture_flag === 'true') {
 } else {
 	capture_flag = true;
 }
+
+// get game version
+var game_version = '';
+var version_string = '';
+function get_game_version() {
+	arenaJson = process.env.WOWS_PATH;
+	fs.readFile( arenaJson + '/game_info.xml', function(err, data) {
+		var json = parser.xml2js(data, {compact: true, spaces: 4});
+		game_version = json.protocol.game.version_name._text;
+
+		var vreg = new RegExp(/^(\d+)\.(\d+)\.(\d+)\.(\d+).+$/);
+		var vmatch = vreg.exec(game_version);
+		version_string = vmatch[1]+'.'+vmatch[2]+'.'+vmatch[3]+'.'+vmatch[4];
+
+		console.log('game version: ' + game_version + ' (short: '+version_string+')');
+	});
+}
+get_game_version();
 
 // create application/json parser
 var jsonParser = bodyParser.json();
@@ -351,7 +370,7 @@ router.get('/ship', jsonParser, function(req, res) {
 // arena api
 router.get('/arena', jsonParser, function(req, res) {
 	var fname = process.argv[2];
-	var freg = new RegExp(/^\d{8}_\d{6}_\w{4}\d{3}-.+$/);
+	var freg = new RegExp(/^\d{8}_\d{6}_\w{4}\d{3}-.+$/);	
 	var arg_mode = false;
 	var arenaJson = '';
 
@@ -359,8 +378,8 @@ router.get('/arena', jsonParser, function(req, res) {
 	arenaJson = process.env.WOWS_PATH;
 	if (fs.existsSync(arenaJson + '/bin64/replays/tempArenaInfo.json')) {
 		arenaJson += '/bin64/replays/tempArenaInfo.json';
-	} else if (fs.existsSync(arenaJson + '/replays/tempArenaInfo.json')) {
-		arenaJson += '/replays/tempArenaInfo.json';
+	} else if (fs.existsSync(arenaJson + '/replays/'+version_string+'/tempArenaInfo.json')) {
+		arenaJson += '/replays/'+version_string+'/tempArenaInfo.json';
 	} else {
 		arenaJson += '/replays/tempArenaInfo.json';
 	}
